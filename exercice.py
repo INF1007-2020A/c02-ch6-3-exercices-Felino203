@@ -29,10 +29,37 @@ def remove_comments(full_text, comment_start, comment_end):
 	return full_text
 
 def get_tag_prefix(text, opening_tags, closing_tags):
+	for t in zip(opening_tags,closing_tags):
+		if text.startswith(t[0]):
+			return (t[0], None)
+		if text.startswith(t[1]):
+			return (None, t[1])
+
 	return (None, None)
 
 def check_tags(full_text, tag_names, comment_tags):
-	return False
+	text= remove_comments(full_text, *comment_tags)
+	if text is None:
+		return False
+
+	otags = {f"<{name}>": f"</{name}>" for name in tag_names}
+	ctags = dict((v,k) for k,v in otags.items())
+
+	tag_stack = []
+	while len(text) != 0:
+		tag = get_tag_prefix(text, otags, ctags)
+		if tag[0] is not None:
+			tag_stack.append(tag[0])
+			text = text[len(tag[0]):]
+		elif tag[1] is not None:
+			if len(tag_stack) == 0 or tag_stack[-1] != ctags[tag[1]]:
+				return False
+			tag_stack.pop()
+			text = text[len(tag[1]):]
+		else:
+			text = text[1:]
+	return len(tag_stack) == 0
+
 
 
 if __name__ == "__main__":
